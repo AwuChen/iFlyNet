@@ -18,8 +18,8 @@
   "scripts": {
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build --repo https://github.com/AwuChen/iFlyNet.git",
-    "start": "react-scripts start",
-    "build": "react-scripts build",
+    "start": "NODE_OPTIONS=--openssl-legacy-provider react-scripts start",
+    "build": "CI=false NODE_OPTIONS=--openssl-legacy-provider react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
