@@ -1,0 +1,22 @@
+{
+  "files": {
+    "main.css": "/iFlyNet/static/css/main.ead59979.chunk.css",
+    "main.js": "/iFlyNet/static/js/main.29785797.chunk.js",
+    "main.js.map": "/iFlyNet/static/js/main.29785797.chunk.js.map",
+    "runtime-main.js": "/iFlyNet/static/js/runtime-main.933835e8.js",
+    "runtime-main.js.map": "/iFlyNet/static/js/runtime-main.933835e8.js.map",
+    "static/js/2.e9d286b3.chunk.js": "/iFlyNet/static/js/2.e9d286b3.chunk.js",
+    "static/js/2.e9d286b3.chunk.js.map": "/iFlyNet/static/js/2.e9d286b3.chunk.js.map",
+    "index.html": "/iFlyNet/index.html",
+    "precache-manifest.4e260d2eb4b51a561d3e883253f09386.js": "/iFlyNet/precache-manifest.4e260d2eb4b51a561d3e883253f09386.js",
+    "service-worker.js": "/iFlyNet/service-worker.js",
+    "static/css/main.ead59979.chunk.css.map": "/iFlyNet/static/css/main.ead59979.chunk.css.map",
+    "static/js/2.e9d286b3.chunk.js.LICENSE.txt": "/iFlyNet/static/js/2.e9d286b3.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.933835e8.js",
+    "static/js/2.e9d286b3.chunk.js",
+    "static/css/main.ead59979.chunk.css",
+    "static/js/main.29785797.chunk.js"
+  ]
+}
