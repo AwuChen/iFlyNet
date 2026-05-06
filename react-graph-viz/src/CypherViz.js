@@ -1438,47 +1438,69 @@ class CypherViz extends React.Component {
 }
 }
 
+const OPENAI_API_KEY = process.env.REACT_APP_OPENAI_KEY || '';
+
+const embedTexts = async (texts) => {
+  const res = await fetch('https://api.openai.com/v1/embeddings', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({ model: 'text-embedding-3-small', input: texts }),
+  });
+  if (!res.ok) throw new Error(`OpenAI embeddings error: ${res.status}`);
+  const data = await res.json();
+  // API returns objects sorted by index
+  return data.data.sort((a, b) => a.index - b.index).map(d => d.embedding);
+};
+
+const cosineSimilarity = (a, b) => {
+  let dot = 0, magA = 0, magB = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    magA += a[i] * a[i];
+    magB += b[i] * b[i];
+  }
+  return dot / (Math.sqrt(magA) * Math.sqrt(magB));
+};
+
+const profileText = (name, role) =>
+  `${name}${role ? `. ${role}` : ''}`;
+
 const getRecommendations = async (driver, userName) => {
   const { database } = getNeo4jConfig();
   const session = driver.session({ database });
   try {
-    const userResult = await session.run(
-      `MATCH (u:User) WHERE toLower(u.name) = toLower($name) RETURN u`,
-      { name: userName }
-    );
-    const userProps = userResult.records[0]?.get('u')?.properties || {};
-    const userRole = (userProps.role || '').toLowerCase();
-    const userWords = new Set(
-      userRole.split(/[\s,\-\/\|&()]+/).filter(w => w.length > 3)
+    const result = await session.run(
+      `MATCH (u:User)
+       RETURN u.name AS name, u.role AS role,
+              u.website AS website, u.email AS email`,
     );
 
-    const othersResult = await session.run(
-      `MATCH (other:User)
-       WHERE toLower(other.name) <> toLower($name)
-       OPTIONAL MATCH (other)-[r:CONNECTED_TO]-()
-       WITH other, count(r) AS connectionCount
-       RETURN other.name AS name, other.role AS role,
-              other.website AS website, other.email AS email,
-              connectionCount`,
-      { name: userName }
-    );
+    const allUsers = result.records.map(r => ({
+      name: r.get('name') || '',
+      role: r.get('role') || '',
+      website: r.get('website') || '',
+      email: r.get('email') || '',
+    }));
 
-    const scored = othersResult.records.map(r => {
-      const otherRole = (r.get('role') || '').toLowerCase();
-      const otherWords = otherRole.split(/[\s,\-\/\|&()]+/).filter(w => w.length > 3);
-      const overlap = otherWords.filter(w => userWords.has(w)).length;
-      const connCount = r.get('connectionCount')?.toNumber?.() ?? 0;
-      return {
-        name: r.get('name') || '',
-        role: r.get('role') || '',
-        website: r.get('website') || '',
-        email: r.get('email') || '',
-        connectionCount: connCount,
-        score: overlap * 10 + connCount,
-      };
-    });
+    const currentUser = allUsers.find(u => u.name.toLowerCase() === userName.toLowerCase());
+    const others = allUsers.filter(u => u.name.toLowerCase() !== userName.toLowerCase());
+    if (!currentUser || others.length === 0) return [];
 
-    scored.sort((a, b) => b.score - a.score || Math.random() - 0.5);
+    // Embed user + all others in one batch
+    const texts = [profileText(currentUser.name, currentUser.role),
+                   ...others.map(u => profileText(u.name, u.role))];
+    const embeddings = await embedTexts(texts);
+    const userEmbedding = embeddings[0];
+
+    const scored = others.map((u, i) => ({
+      ...u,
+      score: cosineSimilarity(userEmbedding, embeddings[i + 1]),
+    }));
+
+    scored.sort((a, b) => b.score - a.score);
     return scored.slice(0, 10);
   } finally {
     session.close();
@@ -1557,40 +1579,53 @@ const NFCTrigger = ({ addNode, driver }) => {
       {status === "recommendations" && (
         <div>
           <p style={{ fontSize: "20px", fontWeight: "bold", marginBottom: "4px" }}>Welcome, {username}! 👋</p>
-          <p style={{ color: "#555", fontSize: "14px", marginBottom: "20px" }}>Here are 10 people you should connect with today:</p>
+          <p style={{ color: "#555", fontSize: "14px", marginBottom: "20px" }}>Here are 10 people you should connect with today, ranked by AI:</p>
           {recsLoading ? (
-            <p style={{ color: "#999", textAlign: "center" }}>Finding your best matches...</p>
+            <div style={{ textAlign: "center", padding: "30px 0" }}>
+              <p style={{ color: "#999", marginBottom: "6px" }}>Finding your best matches with AI...</p>
+              <p style={{ color: "#ccc", fontSize: "12px" }}>Analyzing profiles with OpenAI embeddings</p>
+            </div>
           ) : recommendations.length === 0 ? (
             <p style={{ color: "#999", textAlign: "center" }}>No recommendations found yet.</p>
           ) : (
             <div>
-              {recommendations.map((rec, i) => (
-                <div key={rec.name} style={{
-                  display: "flex", alignItems: "flex-start", gap: "12px",
-                  padding: "12px", marginBottom: "10px",
-                  borderRadius: "10px", backgroundColor: "#f9f9f9",
-                  border: "1px solid #eee", boxShadow: "0 1px 3px rgba(0,0,0,0.06)"
-                }}>
-                  <div style={{
-                    minWidth: "28px", height: "28px", borderRadius: "50%",
-                    backgroundColor: "#4CAF50", color: "white",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontWeight: "bold", fontSize: "13px"
-                  }}>{i + 1}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: "bold", fontSize: "15px" }}>{rec.name}</div>
-                    {rec.role && <div style={{ color: "#555", fontSize: "13px", marginTop: "2px" }}>{rec.role}</div>}
-                    <div style={{ display: "flex", gap: "10px", marginTop: "6px", flexWrap: "wrap" }}>
-                      {rec.email && (
-                        <a href={`mailto:${rec.email}`} style={{ fontSize: "12px", color: "#1976D2", textDecoration: "none" }}>✉ Email</a>
-                      )}
-                      {rec.website && (
-                        <a href={rec.website} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#0077B5", textDecoration: "none" }}>in LinkedIn</a>
-                      )}
+              {recommendations.map((rec, i) => {
+                const matchPct = Math.round(rec.score * 100);
+                const barColor = matchPct >= 70 ? "#4CAF50" : matchPct >= 50 ? "#FF9800" : "#90A4AE";
+                return (
+                  <div key={rec.name} style={{
+                    display: "flex", alignItems: "flex-start", gap: "12px",
+                    padding: "12px", marginBottom: "10px",
+                    borderRadius: "10px", backgroundColor: "#f9f9f9",
+                    border: "1px solid #eee", boxShadow: "0 1px 3px rgba(0,0,0,0.06)"
+                  }}>
+                    <div style={{
+                      minWidth: "28px", height: "28px", borderRadius: "50%",
+                      backgroundColor: "#4CAF50", color: "white",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontWeight: "bold", fontSize: "13px", flexShrink: 0
+                    }}>{i + 1}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div style={{ fontWeight: "bold", fontSize: "15px" }}>{rec.name}</div>
+                        <div style={{ fontSize: "12px", fontWeight: "bold", color: barColor, flexShrink: 0, marginLeft: "8px" }}>{matchPct}% match</div>
+                      </div>
+                      {rec.role && <div style={{ color: "#555", fontSize: "13px", marginTop: "2px" }}>{rec.role}</div>}
+                      <div style={{ marginTop: "6px", height: "4px", borderRadius: "2px", backgroundColor: "#e0e0e0" }}>
+                        <div style={{ width: `${matchPct}%`, height: "100%", borderRadius: "2px", backgroundColor: barColor }} />
+                      </div>
+                      <div style={{ display: "flex", gap: "10px", marginTop: "6px", flexWrap: "wrap" }}>
+                        {rec.email && (
+                          <a href={`mailto:${rec.email}`} style={{ fontSize: "12px", color: "#1976D2", textDecoration: "none" }}>✉ Email</a>
+                        )}
+                        {rec.website && (
+                          <a href={rec.website} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#0077B5", textDecoration: "none" }}>in LinkedIn</a>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
           <button
