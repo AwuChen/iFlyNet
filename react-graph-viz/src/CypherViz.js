@@ -2714,7 +2714,7 @@ ${topConnectors.slice(0, 5).map((connector, index) =>
 - **Name**: ${nodeInfo.name || 'N/A'}
 - **Role**: ${nodeInfo.role || 'N/A'}
 - **Location**: ${nodeInfo.location || 'N/A'}
-- **Website**: ${nodeInfo.website || 'N/A'}
+- **LinkedIn**: ${nodeInfo.website || 'N/A'}
 - **Total Connections**: ${totalConnections}
 
 ## **🔗 Connection Analysis**
@@ -3245,8 +3245,8 @@ return (
               <p><strong>Name:</strong> {selectedNode?.name}</p>
               {selectedNode?.role && <p><strong>Program:</strong> {selectedNode.role}</p>}
               {selectedNode?.location && <p><strong>Location:</strong> {selectedNode.location}</p>}
-              {selectedNode?.website && <p><strong>Email:</strong>{" "}
-                <a href={`mailto:${selectedNode.website}`}>
+              {selectedNode?.website && <p><strong>LinkedIn:</strong>{" "}
+                <a href={selectedNode.website} target="_blank" rel="noopener noreferrer">
                 {selectedNode.website.length > 30
                   ? `${selectedNode.website.substring(0, 30)}...`
                 : selectedNode.website}
