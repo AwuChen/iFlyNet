@@ -1,10 +1,10 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "a81b391800f4013ebb011e689506f206",
+    "revision": "bbbe8e3f4abf08a66035c60db1263e7f",
     "url": "/iFlyNet/index.html"
   },
   {
-    "revision": "c63de94e90b6169b5006",
+    "revision": "97433c0ab0278c3f005b",
     "url": "/iFlyNet/static/css/main.ead59979.chunk.css"
   },
   {
@@ -16,8 +16,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/iFlyNet/static/js/2.e9d286b3.chunk.js.LICENSE.txt"
   },
   {
-    "revision": "c63de94e90b6169b5006",
-    "url": "/iFlyNet/static/js/main.6888a9b3.chunk.js"
+    "revision": "97433c0ab0278c3f005b",
+    "url": "/iFlyNet/static/js/main.51933ccb.chunk.js"
   },
   {
     "revision": "825646aa0421bddc6d31",
