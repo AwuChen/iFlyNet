@@ -1,5 +1,5 @@
 /**
- * Single source for Neo4j Aura settings. Keep in sync with Cred/Neo4j-fb691b6b-Created-2026-05-06.txt
+ * Single source for Neo4j Aura settings. Keep in sync with Cred/Neo4j-fb691b6b-Created-2026-05-06.txt (instance: iFlyNet, ID: fb691b6b)
  *
  * If you see "authentication failure": open https://console.neo4j.io → your instance →
  * reset the password, paste it here (and in Cred), rebuild/redeploy.
