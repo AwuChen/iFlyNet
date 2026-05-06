@@ -1447,7 +1447,7 @@ const NFCTrigger = ({ addNode }) => {
     if (username.toLowerCase() === phoneOwner.toLowerCase()) {
       setStatus("self");
       setTimeout(() => {
-        window.location.assign("/TechFestNet/#/");
+        window.location.assign("/iFlyNet/#/");
       }, 1500);
       return;
     }
@@ -1464,7 +1464,7 @@ const NFCTrigger = ({ addNode }) => {
         setStatus("error");
       }
       setTimeout(() => {
-        window.location.assign("/TechFestNet/#/");
+        window.location.assign("/iFlyNet/#/");
       }, 2000);
     };
 
@@ -1476,7 +1476,7 @@ const NFCTrigger = ({ addNode }) => {
     setPhoneOwner(username);
     setStatus("setup-complete");
     setTimeout(() => {
-      window.location.assign("/TechFestNet/#/");
+      window.location.assign("/iFlyNet/#/");
     }, 2000);
   };
 
@@ -1524,7 +1524,7 @@ const ResetPhone = () => {
     localStorage.removeItem("techfestnet_phone_owner");
     setReset(true);
     setTimeout(() => {
-      window.location.assign("/TechFestNet/#/");
+      window.location.assign("/iFlyNet/#/");
     }, 2000);
   };
 
@@ -1550,7 +1550,7 @@ const ResetPhone = () => {
             Reset
           </button>
           <button
-            onClick={() => window.location.assign("/TechFestNet/#/")}
+            onClick={() => window.location.assign("/iFlyNet/#/")}
             style={{ padding: "12px 32px", fontSize: "16px", backgroundColor: "#999", color: "white", border: "none", borderRadius: "6px", cursor: "pointer" }}
           >
             Cancel
@@ -2829,7 +2829,7 @@ return (
       {localStorage.getItem("techfestnet_phone_owner") && (
         <button 
           id="reset-phone"
-          onClick={() => window.location.assign("/TechFestNet/#/reset")}
+          onClick={() => window.location.assign("/iFlyNet/#/reset")}
           style={{ fontSize: "10px", opacity: 0.5, padding: "2px 6px", marginLeft: "4px" }}
         >
           Reset Phone
