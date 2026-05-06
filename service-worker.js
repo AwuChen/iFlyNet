@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
 
 importScripts(
-  "/iFlyNet/precache-manifest.4e260d2eb4b51a561d3e883253f09386.js"
+  "/iFlyNet/precache-manifest.09378059c86d1c74c9746d1083b0b455.js"
 );
 
 self.addEventListener('message', (event) => {
