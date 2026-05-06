@@ -1,14 +1,14 @@
 {
   "files": {
     "main.css": "/iFlyNet/static/css/main.ead59979.chunk.css",
-    "main.js": "/iFlyNet/static/js/main.61fbfab6.chunk.js",
-    "main.js.map": "/iFlyNet/static/js/main.61fbfab6.chunk.js.map",
+    "main.js": "/iFlyNet/static/js/main.6888a9b3.chunk.js",
+    "main.js.map": "/iFlyNet/static/js/main.6888a9b3.chunk.js.map",
     "runtime-main.js": "/iFlyNet/static/js/runtime-main.933835e8.js",
     "runtime-main.js.map": "/iFlyNet/static/js/runtime-main.933835e8.js.map",
     "static/js/2.e9d286b3.chunk.js": "/iFlyNet/static/js/2.e9d286b3.chunk.js",
     "static/js/2.e9d286b3.chunk.js.map": "/iFlyNet/static/js/2.e9d286b3.chunk.js.map",
     "index.html": "/iFlyNet/index.html",
-    "precache-manifest.8316c94bbe001fbffc42aeb99643eeeb.js": "/iFlyNet/precache-manifest.8316c94bbe001fbffc42aeb99643eeeb.js",
+    "precache-manifest.7730712304385089e2c1588c1680797b.js": "/iFlyNet/precache-manifest.7730712304385089e2c1588c1680797b.js",
     "service-worker.js": "/iFlyNet/service-worker.js",
     "static/css/main.ead59979.chunk.css.map": "/iFlyNet/static/css/main.ead59979.chunk.css.map",
     "static/js/2.e9d286b3.chunk.js.LICENSE.txt": "/iFlyNet/static/js/2.e9d286b3.chunk.js.LICENSE.txt"
@@ -17,6 +17,6 @@
     "static/js/runtime-main.933835e8.js",
     "static/js/2.e9d286b3.chunk.js",
     "static/css/main.ead59979.chunk.css",
-    "static/js/main.61fbfab6.chunk.js"
+    "static/js/main.6888a9b3.chunk.js"
   ]
 }
