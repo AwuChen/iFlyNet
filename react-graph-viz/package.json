@@ -1,7 +1,7 @@
 {
-  "name": "techfestnet-graph-viz",
+  "name": "iflynet-graph-viz",
   "version": "0.1.0",
-  "homepage": "https://awuchen.github.io/TechFestNet",
+  "homepage": "https://awuchen.github.io/iFlyNet",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^4.2.4",
@@ -17,7 +17,7 @@
   },
   "scripts": {
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build",
+    "deploy": "gh-pages -d build --repo https://github.com/AwuChen/iFlyNet.git",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
