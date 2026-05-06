@@ -1,5 +1,5 @@
 /**
- * Single source for Neo4j Aura settings. Keep in sync with Cred/Neo4j-TechFestNet-Aura.txt
+ * Single source for Neo4j Aura settings. Keep in sync with Cred/Neo4j-fb691b6b-Created-2026-05-06.txt
  *
  * If you see "authentication failure": open https://console.neo4j.io → your instance →
  * reset the password, paste it here (and in Cred), rebuild/redeploy.
@@ -8,10 +8,10 @@
  */
 
 const DEFAULTS = {
-  uri: 'neo4j+s://c9b42b11.databases.neo4j.io',
-  user: 'c9b42b11',
-  password: 'dO3ucmPE8r6Iosz5A4bhVNSd0emZkwxsQ_8n6Galx2k',
-  database: 'c9b42b11',
+  uri: 'neo4j+s://fb691b6b.databases.neo4j.io',
+  user: 'neo4j',
+  password: 'UfdsQn6_jKzgFzp0c9iFgtJ0PP6-zYkJJO-cR6TUpws',
+  database: 'neo4j',
 };
 
 function pickEnv(...candidates) {
