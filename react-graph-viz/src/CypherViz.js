@@ -22,8 +22,8 @@ class CypherViz extends React.Component {
     this.state = {
       data: this.defaultData,
       query: `MATCH (u:User)-[r:CONNECTED_TO]->(v:User) 
-          RETURN u.name AS source, u.role AS sourceRole, u.location AS sourceLocation, u.website AS sourceWebsite, 
-      v.name AS target, v.role AS targetRole, v.location AS targetLocation, v.website AS targetWebsite`,
+          RETURN u.name AS source, u.role AS sourceRole, u.location AS sourceLocation, u.website AS sourceWebsite, u.email AS sourceEmail,
+      v.name AS target, v.role AS targetRole, v.location AS targetLocation, v.website AS targetWebsite, v.email AS targetEmail`,
       latestNode: null, // For NFC editing
       pollingFocusNode: null, // For polling focus (non-editable)
       lastUpdateTime: null,
@@ -42,8 +42,8 @@ class CypherViz extends React.Component {
 
     // Store the default query for polling (separate from user input)
     this.defaultQuery = `MATCH (u:User)-[r:CONNECTED_TO]->(v:User) 
-        RETURN u.name AS source, u.role AS sourceRole, u.location AS sourceLocation, u.website AS sourceWebsite, 
-        v.name AS target, v.role AS targetRole, v.location AS targetLocation, v.website AS targetWebsite`;
+        RETURN u.name AS source, u.role AS sourceRole, u.location AS sourceLocation, u.website AS sourceWebsite, u.email AS sourceEmail,
+        v.name AS target, v.role AS targetRole, v.location AS targetLocation, v.website AS targetWebsite, v.email AS targetEmail`;
 
     // Store the last known data hash for change detection
     this.lastDataHash = null;
@@ -561,6 +561,7 @@ class CypherViz extends React.Component {
             role: record.get("sourceRole"),
             location: record.get("sourceLocation"),
             website: record.get("sourceWebsite"),
+            email: record.get("sourceEmail"),
             x: Math.random() * 500,
             y: Math.random() * 500,
           });
@@ -572,6 +573,7 @@ class CypherViz extends React.Component {
             role: record.get("targetRole"),
             location: record.get("targetLocation"),
             website: record.get("targetWebsite"),
+            email: record.get("targetEmail"),
             x: Math.random() * 500,
             y: Math.random() * 500,
           });
@@ -594,6 +596,7 @@ class CypherViz extends React.Component {
                 role: node.properties.role || "",
                 location: node.properties.location || "",
                 website: node.properties.website || "",
+                email: node.properties.email || "",
                 x: Math.random() * 500,
                 y: Math.random() * 500,
               });
@@ -607,6 +610,7 @@ class CypherViz extends React.Component {
                 role: node.role || node.u_role || "",
                 location: node.location || node.u_location || "",
                 website: node.website || node.u_website || "",
+                email: node.email || node.u_email || "",
                 x: Math.random() * 500,
                 y: Math.random() * 500,
               });
@@ -620,6 +624,7 @@ class CypherViz extends React.Component {
                 role: record.get(key.replace('name', 'role')) || "",
                 location: record.get(key.replace('name', 'location')) || "",
                 website: record.get(key.replace('name', 'website')) || "",
+                email: record.get(key.replace('name', 'email')) || "",
                 x: Math.random() * 500,
                 y: Math.random() * 500,
               });
@@ -1211,8 +1216,8 @@ class CypherViz extends React.Component {
          OPTIONAL MATCH (u)-[r:CONNECTED_TO]->(v:User)
          WHERE v.createdAt IS NOT NULL AND v.createdAt <= $timestamp
          AND r.createdAt IS NOT NULL AND r.createdAt <= $timestamp
-         RETURN u.name AS source, u.role AS sourceRole, u.location AS sourceLocation, u.website AS sourceWebsite,
-                v.name AS target, v.role AS targetRole, v.location AS targetLocation, v.website AS targetWebsite`,
+         RETURN u.name AS source, u.role AS sourceRole, u.location AS sourceLocation, u.website AS sourceWebsite, u.email AS sourceEmail,
+                v.name AS target, v.role AS targetRole, v.location AS targetLocation, v.website AS targetWebsite, v.email AS targetEmail`,
         { timestamp }
       );
 
@@ -1228,6 +1233,8 @@ class CypherViz extends React.Component {
         const targetLocation = record.get('targetLocation');
         const sourceWebsite = record.get('sourceWebsite');
         const targetWebsite = record.get('targetWebsite');
+        const sourceEmail = record.get('sourceEmail');
+        const targetEmail = record.get('targetEmail');
 
         // Add source node with properties
         if (source && !nodesMap.has(source)) {
@@ -1236,6 +1243,7 @@ class CypherViz extends React.Component {
             role: sourceRole || '',
             location: sourceLocation || '',
             website: sourceWebsite || '',
+            email: sourceEmail || '',
             x: Math.random() * 500,
             y: Math.random() * 500,
           });
@@ -1248,6 +1256,7 @@ class CypherViz extends React.Component {
             role: targetRole || '',
             location: targetLocation || '',
             website: targetWebsite || '',
+            email: targetEmail || '',
             x: Math.random() * 500,
             y: Math.random() * 500,
           });
@@ -1983,22 +1992,22 @@ const ResetPhone = () => {
                   MATCH (u:User)
                   WHERE toLower(u.name) = toLower($nodeName)
                   OPTIONAL MATCH (u)-[r:CONNECTED_TO]->(v:User)
-                  RETURN u.name AS sourceName, u.role AS sourceRole, u.location AS sourceLocation, u.website AS sourceWebsite,
-                         v.name AS targetName, v.role AS targetRole, v.location AS targetLocation, v.website AS targetWebsite,
+                  RETURN u.name AS sourceName, u.role AS sourceRole, u.location AS sourceLocation, u.website AS sourceWebsite, u.email AS sourceEmail,
+                         v.name AS targetName, v.role AS targetRole, v.location AS targetLocation, v.website AS targetWebsite, v.email AS targetEmail,
                          r.note AS connectionNote, r.createdAt AS connectionTime
                   UNION
                   MATCH (v:User)-[r:CONNECTED_TO]->(u:User)
                   WHERE toLower(u.name) = toLower($nodeName)
-                  RETURN v.name AS sourceName, v.role AS sourceRole, v.location AS sourceLocation, v.website AS sourceWebsite,
-                         u.name AS targetName, u.role AS targetRole, u.location AS targetLocation, u.website AS targetWebsite,
+                  RETURN v.name AS sourceName, v.role AS sourceRole, v.location AS sourceLocation, v.website AS sourceWebsite, v.email AS sourceEmail,
+                         u.name AS targetName, u.role AS targetRole, u.location AS targetLocation, u.website AS targetWebsite, u.email AS targetEmail,
                          r.note AS connectionNote, r.createdAt AS connectionTime
                   UNION
                   MATCH (u:User)
                   WHERE toLower(u.name) = toLower($nodeName)
                   AND NOT EXISTS((u)-[:CONNECTED_TO]->())
                   AND NOT EXISTS(()-[:CONNECTED_TO]->(u))
-                  RETURN u.name AS sourceName, u.role AS sourceRole, u.location AS sourceLocation, u.website AS sourceWebsite,
-                         null AS targetName, null AS targetRole, null AS targetLocation, null AS targetWebsite,
+                  RETURN u.name AS sourceName, u.role AS sourceRole, u.location AS sourceLocation, u.website AS sourceWebsite, u.email AS sourceEmail,
+                         null AS targetName, null AS targetRole, null AS targetLocation, null AS targetWebsite, null AS targetEmail,
                          null AS connectionNote, null AS connectionTime
                 `;
                 
@@ -2143,8 +2152,8 @@ const ResetPhone = () => {
                 // Immediately return to default query without any delay
                 const defaultQuery = `
                   MATCH (u:User)-[r:CONNECTED_TO]->(v:User)
-                  RETURN u.name AS source, u.role AS sourceRole, u.location AS sourceLocation, u.website AS sourceWebsite, 
-                         v.name AS target, v.role AS targetRole, v.location AS targetLocation, v.website AS targetWebsite
+                  RETURN u.name AS source, u.role AS sourceRole, u.location AS sourceLocation, u.website AS sourceWebsite, u.email AS sourceEmail,
+                         v.name AS target, v.role AS targetRole, v.location AS targetLocation, v.website AS targetWebsite, v.email AS targetEmail
                 `;
                 await loadData(null, defaultQuery);
               }
@@ -2634,10 +2643,12 @@ ${topConnectors.slice(0, 5).map((connector, index) =>
             const sourceRole = record.get('sourceRole');
             const sourceLocation = record.get('sourceLocation');
             const sourceWebsite = record.get('sourceWebsite');
+            const sourceEmail = record.get('sourceEmail');
             const targetName = record.get('targetName');
             const targetRole = record.get('targetRole');
             const targetLocation = record.get('targetLocation');
             const targetWebsite = record.get('targetWebsite');
+            const targetEmail = record.get('targetEmail');
             const connectionNote = record.get('connectionNote');
             const connectionTime = record.get('connectionTime');
             
@@ -2649,12 +2660,14 @@ ${topConnectors.slice(0, 5).map((connector, index) =>
               nodeInfo.role = sourceRole;
               nodeInfo.location = sourceLocation;
               nodeInfo.website = sourceWebsite;
+              nodeInfo.email = sourceEmail;
               console.log("Found node info from source:", { name: sourceName, role: sourceRole, location: sourceLocation });
             } else if (targetName && targetName.toLowerCase() === nodeName.toLowerCase()) {
               nodeInfo.name = targetName;
               nodeInfo.role = targetRole;
               nodeInfo.location = targetLocation;
               nodeInfo.website = targetWebsite;
+              nodeInfo.email = targetEmail;
               console.log("Found node info from target:", { name: targetName, role: targetRole, location: targetLocation });
             }
 
@@ -2714,6 +2727,7 @@ ${topConnectors.slice(0, 5).map((connector, index) =>
 - **Name**: ${nodeInfo.name || 'N/A'}
 - **Role**: ${nodeInfo.role || 'N/A'}
 - **Location**: ${nodeInfo.location || 'N/A'}
+- **Email**: ${nodeInfo.email || 'N/A'}
 - **LinkedIn**: ${nodeInfo.website || 'N/A'}
 - **Total Connections**: ${totalConnections}
 
@@ -3245,6 +3259,11 @@ return (
               <p><strong>Name:</strong> {selectedNode?.name}</p>
               {selectedNode?.role && <p><strong>Program:</strong> {selectedNode.role}</p>}
               {selectedNode?.location && <p><strong>Location:</strong> {selectedNode.location}</p>}
+              {selectedNode?.email && <p><strong>Email:</strong>{" "}
+                <a href={`mailto:${selectedNode.email}`}>
+                {selectedNode.email}
+                </a>
+              </p>}
               {selectedNode?.website && <p><strong>LinkedIn:</strong>{" "}
                 <a href={selectedNode.website} target="_blank" rel="noopener noreferrer">
                 {selectedNode.website.length > 30
