@@ -1404,7 +1404,7 @@ class CypherViz extends React.Component {
       <div>
       <Routes>
       <Route path="/reset" element={<ResetPhone />} />
-      <Route path="/:username" element={<NFCTrigger addNode={this.addNodeNFC} />} />
+      <Route path="/:username" element={<NFCTrigger addNode={this.addNodeNFC} driver={this.driver} />} />
       <Route path="/" element={
         <GraphView 
         data={this.state.data} 
@@ -1438,10 +1438,59 @@ class CypherViz extends React.Component {
 }
 }
 
-const NFCTrigger = ({ addNode }) => {
+const getRecommendations = async (driver, userName) => {
+  const { database } = getNeo4jConfig();
+  const session = driver.session({ database });
+  try {
+    const userResult = await session.run(
+      `MATCH (u:User) WHERE toLower(u.name) = toLower($name) RETURN u`,
+      { name: userName }
+    );
+    const userProps = userResult.records[0]?.get('u')?.properties || {};
+    const userRole = (userProps.role || '').toLowerCase();
+    const userWords = new Set(
+      userRole.split(/[\s,\-\/\|&()]+/).filter(w => w.length > 3)
+    );
+
+    const othersResult = await session.run(
+      `MATCH (other:User)
+       WHERE toLower(other.name) <> toLower($name)
+       OPTIONAL MATCH (other)-[r:CONNECTED_TO]-()
+       WITH other, count(r) AS connectionCount
+       RETURN other.name AS name, other.role AS role,
+              other.website AS website, other.email AS email,
+              connectionCount`,
+      { name: userName }
+    );
+
+    const scored = othersResult.records.map(r => {
+      const otherRole = (r.get('role') || '').toLowerCase();
+      const otherWords = otherRole.split(/[\s,\-\/\|&()]+/).filter(w => w.length > 3);
+      const overlap = otherWords.filter(w => userWords.has(w)).length;
+      const connCount = r.get('connectionCount')?.toNumber?.() ?? 0;
+      return {
+        name: r.get('name') || '',
+        role: r.get('role') || '',
+        website: r.get('website') || '',
+        email: r.get('email') || '',
+        connectionCount: connCount,
+        score: overlap * 10 + connCount,
+      };
+    });
+
+    scored.sort((a, b) => b.score - a.score || Math.random() - 0.5);
+    return scored.slice(0, 10);
+  } finally {
+    session.close();
+  }
+};
+
+const NFCTrigger = ({ addNode, driver }) => {
   const { username } = useParams();
-  const [status, setStatus] = useState(null); // 'setup' | 'connecting' | 'connected' | 'self' | 'error'
+  const [status, setStatus] = useState(null); // 'setup' | 'connecting' | 'connected' | 'self' | 'error' | 'recommendations'
   const [phoneOwner, setPhoneOwner] = useState(() => localStorage.getItem("techfestnet_phone_owner"));
+  const [recommendations, setRecommendations] = useState([]);
+  const [recsLoading, setRecsLoading] = useState(false);
 
   useEffect(() => {
     if (!username) return;
@@ -1452,12 +1501,13 @@ const NFCTrigger = ({ addNode }) => {
       return;
     }
 
-    // Case 2: Tapped own card — no-op, redirect home
+    // Case 2: Tapped own card — show recommendations
     if (username.toLowerCase() === phoneOwner.toLowerCase()) {
-      setStatus("self");
-      setTimeout(() => {
-        window.location.assign("/iFlyNet/#/");
-      }, 1500);
+      setStatus("recommendations");
+      setRecsLoading(true);
+      getRecommendations(driver, username)
+        .then(recs => { setRecommendations(recs); setRecsLoading(false); })
+        .catch(() => setRecsLoading(false));
       return;
     }
 
@@ -1465,7 +1515,7 @@ const NFCTrigger = ({ addNode }) => {
     const connectAndRedirect = async () => {
       setStatus("connecting");
       try {
-        await addNode(username, phoneOwner); // cardUser = person on the card, phoneOwner = this phone's owner
+        await addNode(username, phoneOwner);
         console.log(`NFC Trigger: Connected ${phoneOwner} with ${username}`);
         setStatus("connected");
       } catch (error) {
@@ -1483,16 +1533,17 @@ const NFCTrigger = ({ addNode }) => {
   const handleSetup = () => {
     localStorage.setItem("techfestnet_phone_owner", username);
     setPhoneOwner(username);
-    setStatus("setup-complete");
-    setTimeout(() => {
-      window.location.assign("/iFlyNet/#/");
-    }, 2000);
+    setStatus("recommendations");
+    setRecsLoading(true);
+    getRecommendations(driver, username)
+      .then(recs => { setRecommendations(recs); setRecsLoading(false); })
+      .catch(() => setRecsLoading(false));
   };
 
   return (
-    <div style={{ textAlign: "center", padding: "40px 20px", fontSize: "18px", fontFamily: "sans-serif" }}>
+    <div style={{ padding: "30px 20px", fontSize: "16px", fontFamily: "sans-serif", maxWidth: "480px", margin: "0 auto" }}>
       {status === "setup" && (
-        <div>
+        <div style={{ textAlign: "center" }}>
           <p style={{ fontSize: "22px", marginBottom: "10px" }}>Set up this phone as <strong>{username}</strong>'s device?</p>
           <p style={{ color: "#666", fontSize: "14px", marginBottom: "20px" }}>Tap your own card once to link with your phone. After that, tapping other people's cards will add them to your network.</p>
           <button
@@ -1503,23 +1554,61 @@ const NFCTrigger = ({ addNode }) => {
           </button>
         </div>
       )}
-      {status === "setup-complete" && (
+      {status === "recommendations" && (
         <div>
-          <p style={{ color: "#4CAF50", fontSize: "22px" }}>You're all set, {username}!</p>
-          <p style={{ color: "#666", fontSize: "14px" }}>Redirecting to your network...</p>
+          <p style={{ fontSize: "20px", fontWeight: "bold", marginBottom: "4px" }}>Welcome, {username}! 👋</p>
+          <p style={{ color: "#555", fontSize: "14px", marginBottom: "20px" }}>Here are 10 people you should connect with today:</p>
+          {recsLoading ? (
+            <p style={{ color: "#999", textAlign: "center" }}>Finding your best matches...</p>
+          ) : recommendations.length === 0 ? (
+            <p style={{ color: "#999", textAlign: "center" }}>No recommendations found yet.</p>
+          ) : (
+            <div>
+              {recommendations.map((rec, i) => (
+                <div key={rec.name} style={{
+                  display: "flex", alignItems: "flex-start", gap: "12px",
+                  padding: "12px", marginBottom: "10px",
+                  borderRadius: "10px", backgroundColor: "#f9f9f9",
+                  border: "1px solid #eee", boxShadow: "0 1px 3px rgba(0,0,0,0.06)"
+                }}>
+                  <div style={{
+                    minWidth: "28px", height: "28px", borderRadius: "50%",
+                    backgroundColor: "#4CAF50", color: "white",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontWeight: "bold", fontSize: "13px"
+                  }}>{i + 1}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: "bold", fontSize: "15px" }}>{rec.name}</div>
+                    {rec.role && <div style={{ color: "#555", fontSize: "13px", marginTop: "2px" }}>{rec.role}</div>}
+                    <div style={{ display: "flex", gap: "10px", marginTop: "6px", flexWrap: "wrap" }}>
+                      {rec.email && (
+                        <a href={`mailto:${rec.email}`} style={{ fontSize: "12px", color: "#1976D2", textDecoration: "none" }}>✉ Email</a>
+                      )}
+                      {rec.website && (
+                        <a href={rec.website} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#0077B5", textDecoration: "none" }}>in LinkedIn</a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <button
+            onClick={() => window.location.assign("/iFlyNet/#/")}
+            style={{ width: "100%", marginTop: "16px", padding: "12px", fontSize: "15px", backgroundColor: "#333", color: "white", border: "none", borderRadius: "8px", cursor: "pointer" }}
+          >
+            Go to my network →
+          </button>
         </div>
       )}
       {status === "connecting" && (
-        <p style={{ color: "#2196F3" }}>Connecting with {username}...</p>
+        <p style={{ textAlign: "center", color: "#2196F3" }}>Connecting with {username}...</p>
       )}
       {status === "connected" && (
-        <p style={{ color: "#4CAF50" }}>Connected with {username}!</p>
-      )}
-      {status === "self" && (
-        <p style={{ color: "#666" }}>Welcome back, {username}! Redirecting...</p>
+        <p style={{ textAlign: "center", color: "#4CAF50" }}>Connected with {username}!</p>
       )}
       {status === "error" && (
-        <p style={{ color: "red" }}>Something went wrong. Please try again.</p>
+        <p style={{ textAlign: "center", color: "red" }}>Something went wrong. Please try again.</p>
       )}
     </div>
   );
